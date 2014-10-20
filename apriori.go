@@ -52,7 +52,7 @@ func main() {
 	for key, record := range records {
 		Baskets[key].Id = record[0]
 		for i := 1; i < len(record); i++ {
-			var field = strings.TrimSpace(record[i-1])
+			var field = strings.TrimSpace(record[i])
 			if field == "true" {
 				Baskets[key].Products = append(Baskets[key].Products, &(Products[i-1]))
 				Products[i-1].BoughtQuantity++
