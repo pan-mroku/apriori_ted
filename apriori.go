@@ -64,19 +64,17 @@ var mutex sync.Mutex
 
 func ManaGatherer(Pairs *list.List, pair *ProductPair, waitGroup *sync.WaitGroup) {
 	defer waitGroup.Done()
+	mutex.Lock()
+	defer mutex.Unlock()
 
 	for pairIterator := Pairs.Front(); pairIterator != nil; pairIterator = pairIterator.Next() {
 		if pairIterator.Value.(*ProductPair).First == pair.First && pairIterator.Value.(*ProductPair).Second == pair.Second {
-			mutex.Lock()
 			pairIterator.Value.(*ProductPair).Quantity++
-			defer mutex.Unlock()
 			return
 		}
 	}
 
-	mutex.Lock()
-	Pairs.PushBack(pair)
-	defer mutex.Unlock()
+	Pairs.PushFront(pair)
 }
 
 func main() {
@@ -181,7 +179,7 @@ func main() {
 		for i := 0; i < 2; i++ {
 			var del = pair
 			pair = pair.Next()
-			if pair.Value.(*ProductPair).Confidence < *minimalConfidence {
+			if del.Value.(*ProductPair).Confidence < *minimalConfidence {
 				Pairs.Remove(del)
 			}
 		}
