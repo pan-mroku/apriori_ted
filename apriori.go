@@ -78,6 +78,7 @@ func ManaGatherer(Pairs *list.List, pair *ProductPair, waitGroup *sync.WaitGroup
 }
 
 func main() {
+	//Wczytywanie plików i konfiguracji
 	var filename = flag.String("filename", "marketbasket.csv", "csv file to load")
 	flag.StringVar(filename, "f", "marketbasket.csv", "csv file to load")
 	minimalSupport = flag.Float64("support", 0.002, "Minimal support")
@@ -99,12 +100,14 @@ func main() {
 	reader.Comma = ','
 
 	firstRecord, _ := reader.Read()
+	//Pierwsza linijka to definicja kolumn
 	var Products []Product
 	Products = make([]Product, len(firstRecord)-1) //pierwsza colmuna to basket id
 	for i := 1; i < len(firstRecord); i++ {
 		Products[i-1] = Product{strings.TrimSpace(firstRecord[i]), 0, 0}
 	}
 
+	//Czytanie koszyków
 	records, err := reader.ReadAll()
 	if err != nil {
 		fmt.Println("Error:", err)
@@ -119,6 +122,7 @@ func main() {
 			for i := 1; i < len(record); i++ {
 				var field = strings.TrimSpace(record[i])
 				if field == "true" {
+					//Używam wskaźników, żeby uniknąć porównywania stringów
 					basket.Products.PushBack(&Products[i-1])
 					Products[i-1].BoughtQuantity++
 				}
@@ -126,11 +130,13 @@ func main() {
 			Baskets.PushBack(&basket)
 		}
 
+		//Liczenie wsparcia dla poszczególnych produktów, by móc część odrzucić przy tworzeniu par
 		for i := 0; i < len(Products); i++ {
 			Products[i].Support = float64(Products[i].BoughtQuantity) / float64(Baskets.Len())
 		}
 	}
 
+	//Współbieżne tworzenie par
 	fmt.Println("Read ", Baskets.Len(), " baskets. Products support counted. Time = ", time.Now().Sub(StartTime))
 
 	var Pairs = list.New()
@@ -162,6 +168,7 @@ func main() {
 
 	fmt.Println("Quantities of product pairs summed. Time = ", time.Now().Sub(StartTime))
 
+	//Liczenie parametrów par
 	for pair := Pairs.Front(); pair != nil; {
 		var tmp *ProductPair
 		tmp = pair.Value.(*ProductPair)
@@ -187,6 +194,8 @@ func main() {
 
 	fmt.Println("Product pairs with too low support or confidence deleted. Time = ", time.Now().Sub(StartTime))
 	fmt.Println("Created pairs (", Pairs.Len(), "): ")
+
+	//Wydruk par
 	fmt.Println("First,First_Support,Second,Second_Support,Pair_Support,Confidence,Gain")
 	for pair := Pairs.Front(); pair != nil; pair = pair.Next() {
 		var tmp = pair.Value.(*ProductPair)
